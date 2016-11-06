@@ -1,0 +1,253 @@
+<!doctype html>
+<!--
+
+	TODO
+
+	*
+
+-->
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Three | Waves</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body, canvas { display: block; }
+.stats { position: absolute; left: 0; top: 0; }
+body .dg { font-family: sans-serif; text-shadow: none; }
+body .dg.main { background: #000; }
+body .dg.main::-webkit-scrollbar { width: 10px; border-radius: 5px; }
+body .dg.a { margin-right: 0; }
+body .dg .property-name { width: 15%; text-indent: 5px; }
+body .dg .c { width: 85%; }
+body .dg li { -webkit-transition: none; }
+canvas.pointing { cursor: pointer; }
+</style>
+</head>
+
+<body>
+
+<script src="three-82.js"></script>
+<script src="Rudie.Three.js"></script>
+<script>
+// config
+var MOVEMENT = 2;
+var MAX_MOVEMENT = 7;
+var MOVE_PER_FRAMES = 4; // 15x/s
+var LINE_SIZE = 2;
+var GRID_LOCATION = 1;
+
+// webgl renderer
+var renderMethod = '#canvas' == location.hash ? 'CanvasRenderer' : 'WebGLRenderer';
+var renderer = new THREE[renderMethod]({antialias: true});
+renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+renderer.clear();
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// scene (= viewport?)
+var scene = new THREE.Scene();
+
+// camera
+var camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 10000);
+camera.position.x = 400;
+camera.position.y = 200;
+camera.position.z = 600;
+scene.add(camera);
+
+// point at the center
+camera.lookAt(scene.position);
+
+// ==== //
+
+scene.makeAxes(5000);
+
+// ==== //
+
+// define material
+var material = new THREE.LineBasicMaterial({
+	color: 0x000000,
+});
+
+// define line
+function vline(x, z) {
+	var geo = new THREE.Geometry;
+	geo.vertices.push(new THREE.Vector3(x, -LINE_SIZE, z));
+	geo.vertices.push(new THREE.Vector3(x, LINE_SIZE, z));
+	var line = new THREE.Line(geo, material);
+	return line;
+}
+
+function hline(from, to) {
+	var geo = new THREE.Geometry;
+	geo.vertices.push(from);
+	geo.vertices.push(to);
+	var line = new THREE.Line(geo, material);
+	return line;
+}
+
+// ==== //
+
+// add vertical lines
+var lines = [],
+	grid = [];
+for ( var x=-200; x<=200; x+=40 ) {
+	var gi = grid.push([]),
+		gl = grid[gi-1];
+	for ( var z=-200; z<=200; z+=40 ) {
+		var line = vline(x, z);
+		line.height = 0;
+		scene.add(line);
+		lines.push(line);
+		gl.push(line);
+	}
+}
+
+// add horizontal lines
+var hlines = [];
+for ( var x=0, L=grid.length; x<L; x++ ) {
+	for ( var z=0; z<L; z++ ) {
+		var from = grid[x][z].geometry.vertices[GRID_LOCATION];
+
+		if ( grid[x+1] ) {
+			var to = grid[x+1][z].geometry.vertices[GRID_LOCATION],
+				line = hline(from, to);
+			scene.add(line);
+			hlines.push(line);
+		}
+
+		if ( grid[x][z+1] ) {
+			var to = grid[x][z+1].geometry.vertices[GRID_LOCATION],
+				line = hline(from, to);
+			scene.add(line);
+			hlines.push(line);
+		}
+
+		if ( grid[x+1] && grid[x+1][z+1] ) {
+			var to = grid[x+1][z+1].geometry.vertices[GRID_LOCATION],
+				line = hline(from, to);
+			scene.add(line);
+			hlines.push(line);
+		}
+	}
+}
+
+// animate lines
+function moveLines() {
+	lines.forEach(function(line) {
+		var c = Math.round((Math.random() - 0.5) * MOVEMENT);
+		line.height += c;
+
+		if ( line.height > MAX_MOVEMENT ) {
+			line.height = MAX_MOVEMENT;
+		}
+		else if ( line.height < -MAX_MOVEMENT ) {
+			line.height = -MAX_MOVEMENT;
+		}
+
+		line.geometry.vertices[0].y = -LINE_SIZE + line.height;
+		line.geometry.vertices[1].y = LINE_SIZE + line.height;
+		line.geometry.verticesNeedUpdate = true;
+	});
+
+	hlines.forEach(function(line) {
+		line.geometry.verticesNeedUpdate = true;
+	});
+}
+
+// ==== //
+
+var iterations = 0,
+	paused,
+	rotating = 0,
+	lastLeft,
+	lastTop,
+	lookAt = scene.position,
+	moveCounter = 0;
+
+function render(t) {
+	iterations++;
+	renderer.render(scene, camera);
+
+	window.stats && stats.update();
+
+	moveCounter++;
+	if ( moveCounter >= MOVE_PER_FRAMES ) {
+		moveCounter = 0;
+	}
+
+	if ( !paused && moveCounter == 0 ) {
+		moveLines();
+	}
+
+	requestAnimationFrame(render);
+}
+render();
+
+// === //
+
+
+// drag rotating
+renderer.domElement.addEventListener('mousedown', function(e) {
+	e.preventDefault();
+
+	rotating = e.button + 1;
+	lastLeft = e.clientX;
+	lastTop = e.clientY;
+});
+renderer.domElement.addEventListener('mousemove', function(e) {
+	e.preventDefault();
+
+	if ( rotating ) {
+		var left = e.clientX,
+			dx = left - lastLeft;
+
+		lastLeft = left;
+
+		var rotate = dx * 0.5 * DEG_TO_RAD; // rotate 0.5 deg per px
+
+		camera.rotateAroundY(rotate, lookAt);
+		var top = e.clientY,
+			dy = top - lastTop;
+
+		lastTop = top;
+
+		camera.position.y += 5 * dy; // mouse 1 px down => camera 5 up
+		camera.lookAt(lookAt);
+	}
+});
+renderer.domElement.addEventListener('mouseup', function(e) {
+	e.preventDefault();
+
+	rotating = 0;
+});
+renderer.domElement.addEventListener('contextmenu', function(e) {
+	e.preventDefault();
+});
+
+// scroll zooming
+function onmousewheel(e) {
+	var d = e.wheelDelta || -e.detail;
+	var zoom = 0 < d ? 1.1 : 0.9;
+	camera.zoom *= zoom;
+	camera.updateProjectionMatrix();
+}
+
+renderer.domElement.addEventListener('DOMMouseScroll', onmousewheel);
+renderer.domElement.addEventListener('mousewheel', onmousewheel);
+
+// focus / blur render stats
+window.addEventListener('focus', function(e) {
+	console.log('focus', iterations);
+});
+window.addEventListener('blur', function(e) {
+	console.log('blur', iterations);
+});
+
+</script>
+
+</body>
+
+</html>

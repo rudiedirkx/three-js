@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Three | Cubes</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body, canvas { display: block; }
+.stats { position: absolute; left: 0; top: 0; }
+body .dg { font-family: sans-serif; text-shadow: none; }
+body .dg.main { background: #000; }
+body .dg.main::-webkit-scrollbar { width: 10px; border-radius: 5px; }
+body .dg.a { margin-right: 0; }
+body .dg .property-name { width: 15%; text-indent: 5px; }
+body .dg .c { width: 85%; }
+body .dg li { -webkit-transition: none; }
+</style>
+</head>
+
+<body>
+
+<script src="three-82.js"></script>
+<script src="Rudie.Three.js"></script>
+<script>
+var DEG_TO_RAD = 2 * Math.PI / 360,
+	RAD_TO_DEG = 1 / DEG_TO_RAD;
+
+// webgl renderer
+var renderMethod = '#canvas' == location.hash ? 'CanvasRenderer' : 'WebGLRenderer';
+var renderer = new THREE[renderMethod]({antialias: true});
+renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+renderer.clear();
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+// scene (= viewport?)
+var scene = new THREE.Scene();
+
+// camera
+var camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 10000);
+camera.position.x = 800;
+camera.position.y = 500;
+camera.position.z = 800;
+scene.add(camera);
+
+// point at the center
+camera.lookAt(scene.position);
+
+// ==== //
+
+scene.makeAxes(5000);
+
+// ==== //
+
+// plane
+var planeMat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+
+// floor
+var planeGeo = new THREE.PlaneGeometry(500, 1200, 10, 10);
+var plane = new THREE.Mesh(planeGeo, planeMat);
+plane.rotation.x = -90 * DEG_TO_RAD;
+plane.position.y = -200;
+plane.receiveShadow = true;
+scene.add(plane);
+
+// ==== //
+
+// create material
+var material = new THREE.MeshLambertMaterial({color: 0xCC0000});
+
+// create geometry
+var geo = new THREE.CubeGeometry(100, 100, 100);
+
+// create cube
+var cube = new THREE.Mesh(geo, material);
+cube['x-name'] = 'The red beam';
+cube.castShadow = true;
+cube.receiveShadow = true;
+cube.position.y = 50;
+scene.add(cube);
+
+// ==== //
+
+// create a light
+var light = new THREE.SpotLight(0xFFFF99);
+light.castShadow = true;
+light.position.y = 800;
+light.distance = 10000; // wtf is this?
+scene.add(light);
+
+// Show the light & shadows
+var camHelper = new THREE.CameraHelper(camera);
+scene.add(camHelper);
+
+// ==== //
+
+var paused, I = 0;
+function rotate() {
+	cube.rotation.x = Math.sin(I * 1 * DEG_TO_RAD)
+	cube.rotation.y = Math.cos(I * 2 * DEG_TO_RAD)
+	cube.rotation.z = Math.sin(I * 4 * DEG_TO_RAD)
+
+	cube.position.x = 100 * Math.sin(I * 2 * DEG_TO_RAD)
+	cube.position.y = 200 * Math.cos(I * DEG_TO_RAD)
+	cube.position.z = 400 * Math.sin(I * DEG_TO_RAD)
+
+	I++;
+}
+
+function render(t) {
+	renderer.render(scene, camera);
+	!paused && rotate();
+
+	window.stats && stats.update();
+
+	requestAnimationFrame(render);
+}
+
+render();
+
+// ==== //
+
+renderer.domElement.addEventListener('click', function(e) {
+	paused = !paused;
+});
+</script>
+
+<script src="Stats.js"></script>
+<script src="dat.gui.js"></script>
+<script>
+var stats = new Stats();
+stats.getDomElement().className += ' stats';
+document.body.appendChild(stats.getDomElement());
+
+var gui = new dat.GUI(), fl;
+
+fl = gui.addFolder('camera.rotation');
+fl.add(camera.rotation, 'x', -5, 5, 0.1);
+fl.add(camera.rotation, 'y', -5, 5, 0.1);
+fl.add(camera.rotation, 'z', -5, 5, 0.1);
+fl.open();
+
+fl = gui.addFolder('camera.position');
+fl.add(camera.position, 'x', -2500, 2500, 10);
+fl.add(camera.position, 'y', -2500, 2500, 10);
+fl.add(camera.position, 'z', -2500, 2500, 10);
+fl.open();
+
+fl = gui.addFolder('light.position');
+fl.add(light.position, 'x', -500, 500, 10);
+fl.add(light.position, 'y', 0, 1000, 10);
+fl.add(light.position, 'z', -500, 500, 10);
+fl.open();
+
+fl = gui.addFolder('cube.position');
+fl.add(cube.position, 'x', -2500, 2500, 10).listen();
+fl.add(cube.position, 'y', -2500, 2500, 10).listen();
+fl.add(cube.position, 'z', -2500, 2500, 10).listen();
+fl.open();
+
+fl = gui.addFolder('cube.rotation');
+fl.add(cube.rotation, 'x', -5, 5, 0.1).listen();
+fl.add(cube.rotation, 'y', -5, 5, 0.1).listen();
+fl.add(cube.rotation, 'z', -5, 5, 0.1).listen();
+fl.open();
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,312 @@
+<!doctype html>
+<!--
+
+	TODO
+
+	* Dragging UP with the RIGHT mouse button, should rotate the camera around (over) the
+	  center, instead of just moving up. (Dragging UP with LEFT can still simply move up.)
+
+	  Moving UP is simple (1 property). Rotating upward over the center is more awesome.
+
+-->
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Three | Cubes</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body, canvas { display: block; }
+.stats { position: absolute; left: 0; top: 0; }
+body .dg { font-family: sans-serif; text-shadow: none; }
+body .dg.main { background: #000; }
+body .dg.main::-webkit-scrollbar { width: 10px; border-radius: 5px; }
+body .dg.a { margin-right: 0; }
+body .dg .property-name { width: 15%; text-indent: 5px; }
+body .dg .c { width: 85%; }
+body .dg li { -webkit-transition: none; }
+canvas.pointing { cursor: pointer; }
+.help { position: absolute; left: 0; top: 10px; width: 100%; text-align: center; text-shadow: 0 0 8px black; color: white; font-size: 30px; }
+</style>
+</head>
+
+<body>
+
+<p class="help">Left click, right click, mousewheel, drag, party.</p>
+
+<script src="three-82.js"></script>
+<script src="Rudie.Three.js"></script>
+<script>
+var WIDTH = innerWidth;
+var HEIGHT = innerHeight;
+var BLOCK_SIZE = 100;
+var BLOCK_SCALE = 0.9;
+
+function rand(maxp1) {
+	return parseInt(Math.random() * maxp1);
+}
+
+function createBlock() {
+	var obj = new THREE.Mesh(geo, colors[rand(colors.length)]);
+	obj.scale.set(BLOCK_SCALE, BLOCK_SCALE, BLOCK_SCALE);
+	return obj;
+}
+
+// webgl renderer
+var renderMethod = '#canvas' == location.hash ? 'CanvasRenderer' : 'WebGLRenderer';
+var renderer = new THREE[renderMethod]({antialias: true});
+renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+renderer.clear();
+renderer.setSize(WIDTH, HEIGHT);
+document.body.appendChild(renderer.domElement);
+
+// scene (= viewport?)
+var scene = new THREE.Scene();
+
+// camera
+var camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 1, 10000);
+camera.position.x = 500;
+camera.position.y = 500;
+camera.position.z = 500;
+scene.add(camera);
+
+// point at the center
+camera.lookAt(scene.position);
+
+// ==== //
+
+scene.makeAxes(5000);
+
+// ==== //
+
+var container = new THREE.Object3D;
+scene.add(container);
+
+// ==== //
+
+// create materials
+var colors = [
+	new THREE.MeshLambertMaterial({color: 0xFF0000}), // red
+	new THREE.MeshLambertMaterial({color: 0x00FF00}), // green
+	new THREE.MeshLambertMaterial({color: 0x0000FF}), // blue
+	new THREE.MeshLambertMaterial({color: 0xFFFF00}), // yellow
+	new THREE.MeshLambertMaterial({color: 0x00FFFF}), //
+	new THREE.MeshLambertMaterial({color: 0xFF00FF}), //
+	new THREE.MeshLambertMaterial({color: 0x000000}), // black
+	new THREE.MeshLambertMaterial({color: 0xFFFFFF})  // white
+];
+
+// create geometry
+var geo = new THREE.CubeGeometry(100, 100, 100);
+
+// create cubes
+var p1 = createBlock();
+p1.position.set(-BLOCK_SIZE/2, -BLOCK_SIZE/2, -BLOCK_SIZE/2);
+container.add(p1);
+
+var p2 = createBlock();
+p2.position.set(-BLOCK_SIZE/2, -BLOCK_SIZE/2, BLOCK_SIZE/2);
+container.add(p2);
+
+var p3 = createBlock();
+p3.position.set(BLOCK_SIZE/2, -BLOCK_SIZE/2, BLOCK_SIZE/2);
+container.add(p3);
+
+var p4 = createBlock();
+p4.position.set(-BLOCK_SIZE/2, BLOCK_SIZE/2, BLOCK_SIZE/2);
+container.add(p4);
+
+var p5 = createBlock();
+p5.position.set(BLOCK_SIZE*1.5, -BLOCK_SIZE/2, BLOCK_SIZE/2);
+container.add(p5);
+
+// ==== //
+
+// and then there were ...
+var lights = [
+	[ 2,  5, -2],
+	[-2, -2,  2]
+];
+for ( var i=0, L=lights.length; i<L; i++ ) {
+	var P = lights[i];
+	var light = new THREE.PointLight(0xFFFFFF);
+	light.position.set.apply(light.position, P).multiplyScalar(1000);
+	light.intensity = 1.3;
+	scene.add(light);
+}
+
+// ==== //
+
+var paused;
+var rotating = 0;
+var moving = false;
+var lastLeft;
+var lastTop;
+var mouse2D = new THREE.Vector2;
+var object;
+var lookAt = scene.position;
+
+function render(t) {
+	renderer.render(scene, camera);
+
+	window.stats && stats.update();
+
+	requestAnimationFrame(render);
+}
+
+render();
+
+// ==== //
+
+// drag rotating
+renderer.domElement.addEventListener('mousedown', function(e) {
+	e.preventDefault();
+
+	moving = false;
+
+	var button = null != e.button ? e.button : e.which - 1; // 0 = left, 1 = middle, 2 = right
+
+	rotating = button + 1;
+	lastLeft = e.clientX;
+	lastTop = e.clientY;
+});
+renderer.domElement.addEventListener('mousemove', function(e) {
+	e.preventDefault();
+
+	moving = true;
+
+	if ( rotating ) {
+		// horizontal
+		//if ( 1 == rotating ) {
+			var left = e.clientX;
+			var dx = left - lastLeft;
+
+			lastLeft = left;
+
+			var rotate = dx * 0.5 * DEG_TO_RAD; // rotate 0.5 deg per px
+
+			camera.rotateAroundY(rotate, lookAt);
+		//}
+		// vertical
+		//else {
+			var top = e.clientY;
+			var dy = top - lastTop;
+
+			lastTop = top;
+
+			camera.position.y += 5 * dy; // mouse 1 px down => camera 5 up
+			camera.lookAt(scene.position);
+		//}
+	}
+});
+renderer.domElement.addEventListener('mouseup', function(e) {
+	e.preventDefault();
+
+	rotating = 0;
+});
+
+// scroll zooming
+function onmousewheel(e) {
+	var d = e.wheelDelta || -e.detail;
+	var zoom = 0 < d ? 1.1 : 0.9;
+	camera.zoom *= zoom;
+	camera.updateProjectionMatrix();
+}
+
+renderer.domElement.addEventListener('DOMMouseScroll', onmousewheel);
+renderer.domElement.addEventListener('mousewheel', onmousewheel);
+
+var rayCaster = new THREE.Raycaster();
+
+function getIntersects(e) {
+	mouse2D.x = e.clientX / WIDTH * 2 - 1;
+	mouse2D.y = e.clientY / HEIGHT * -2 + 1;
+
+	rayCaster.setFromCamera(mouse2D.clone(), camera);
+
+	var intersects = rayCaster.intersectObjects(container.children)
+
+	return intersects;
+}
+
+// add blocks
+renderer.domElement.addEventListener('click', function(e) {
+	if ( !moving ) {
+		if ( object = getIntersects(e)[0] ) {
+			var color = colors[parseInt(Math.random()*colors.length)];
+			var block = createBlock();
+
+			block.position
+				.copy(object.face.normal)
+				.multiplyScalar(BLOCK_SIZE)
+				.add(object.object.position);
+
+			container.add(block);
+		}
+	}
+});
+
+// remove blocks
+renderer.domElement.addEventListener('contextmenu', function(e) {
+	e.preventDefault();
+
+	if ( !moving ) {
+		if ( object = getIntersects(e)[0] ) {
+			if ( 1 < container.children.length ) {
+				object.object.parent.remove(object.object);
+			}
+		}
+	}
+});
+
+// hover pointer
+renderer.domElement.addEventListener('mousemove', function(e) {
+	if ( object = getIntersects(e)[0] ) {
+		this.classList.add('pointing');
+	}
+	else {
+		this.classList.remove('pointing');
+	}
+});
+</script>
+
+<script src="Stats.js"></script>
+<script src="dat.gui.js"></script>
+<script>
+var stats = new Stats();
+stats.getDomElement().className += ' stats';
+document.body.appendChild(stats.getDomElement());
+
+var gui = new dat.GUI(), fl
+
+gui.add(container.children, 'length').listen()
+
+fl = gui.addFolder('camera.rotation')
+fl.add(camera.rotation, 'x', -5, 5, 0.1).listen()
+fl.add(camera.rotation, 'y', -5, 5, 0.1).listen()
+fl.add(camera.rotation, 'z', -5, 5, 0.1).listen()
+fl.open()
+
+fl = gui.addFolder('camera.position')
+fl.add(camera.position, 'x', -1000, 1000, 10).listen()
+fl.add(camera.position, 'y', -1000, 1000, 10).listen()
+fl.add(camera.position, 'z', -1000, 1000, 10).listen()
+fl.open()
+
+fl = gui.addFolder('container.position')
+fl.add(container.position, 'x', -1000, 1000, 10).listen()
+fl.add(container.position, 'y', -1000, 1000, 10).listen()
+fl.add(container.position, 'z', -1000, 1000, 10).listen()
+//fl.open()
+
+fl = gui.addFolder('container.rotation')
+fl.add(container.rotation, 'x', -5, 5, 0.1).listen()
+fl.add(container.rotation, 'y', -5, 5, 0.1).listen()
+fl.add(container.rotation, 'z', -5, 5, 0.1).listen()
+//fl.open()
+</script>
+
+</body>
+
+</html>

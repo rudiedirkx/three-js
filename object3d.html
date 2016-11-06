@@ -1,0 +1,273 @@
+<!doctype html>
+<!--
+
+	TODO
+
+	* Dragging UP with the RIGHT mouse button, should rotate the camera around (over) the
+	  center, instead of just moving up. (Dragging UP with LEFT can still simply move up.)
+
+	  Moving UP is simple (1 property). Rotating upward over the center is more awesome.
+
+-->
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Three | Cubes</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body, canvas { display: block; }
+.stats { position: absolute; left: 0; top: 0; }
+body .dg { font-family: sans-serif; text-shadow: none; }
+body .dg.main { background: #000; }
+body .dg.main::-webkit-scrollbar { width: 10px; border-radius: 5px; }
+body .dg.a { margin-right: 0; }
+body .dg .property-name { width: 15%; text-indent: 5px; }
+body .dg .c { width: 85%; }
+body .dg li { -webkit-transition: none; }
+canvas.pointing { cursor: pointer; }
+</style>
+</head>
+
+<body>
+
+<script src="three-82.js"></script>
+<script src="Rudie.Three.js"></script>
+<script>
+// webgl renderer
+var renderMethod = '#canvas' == location.hash ? 'CanvasRenderer' : 'WebGLRenderer';
+var renderer = new THREE[renderMethod]({antialias: true});
+renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+renderer.clear();
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// scene (= viewport?)
+var scene = new THREE.Scene();
+
+// camera
+var camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 10000);
+camera.position.x = 500;
+camera.position.y = 500;
+camera.position.z = 500;
+scene.add(camera);
+
+// point at the center
+camera.lookAt(scene.position);
+
+// ==== //
+
+scene.makeAxes(5000);
+
+// ==== //
+
+var container = new THREE.Object3D;
+scene.add(container);
+
+// ==== //
+
+// create materials
+var colors = [
+	new THREE.MeshLambertMaterial({color: 0xFF0000}), // red
+	new THREE.MeshLambertMaterial({color: 0x00FF00}), // green
+	new THREE.MeshLambertMaterial({color: 0x0000FF}), // blue
+	new THREE.MeshLambertMaterial({color: 0xFFFF00}), // yellow
+	new THREE.MeshLambertMaterial({color: 0xFF8C00})  // orange
+];
+
+// create geometry
+var geo = new THREE.CubeGeometry(100, 100, 100);
+
+// create cubes
+var p1 = new THREE.Mesh(geo, colors[0]);
+p1.position.set(-50, -50, -50);
+p1.scale.set(0.5, 0.5, 0.5);
+container.add(p1);
+
+var p2 = new THREE.Mesh(geo, colors[1]);
+p2.position.set(-50, -50, 50);
+p2.scale.set(0.5, 0.5, 0.5);
+container.add(p2);
+
+var p3 = new THREE.Mesh(geo, colors[2]);
+p3.position.set(50, -50, 50);
+p3.scale.set(0.5, 0.5, 0.5);
+container.add(p3);
+
+var p4 = new THREE.Mesh(geo, colors[3]);
+p4.position.set(-50, 50, 50);
+p4.scale.set(0.5, 0.5, 0.5);
+container.add(p4);
+
+var p5 = new THREE.Mesh(geo, colors[4]);
+p5.position.set(150, -50, 50);
+p5.scale.set(0.5, 0.5, 0.5);
+container.add(p5);
+
+// ==== //
+
+// and then there were ...
+var lights = [
+	[ 2,  5, -2],
+	[-2, -2,  2]
+];
+for ( var i=0, L=lights.length; i<L; i++ ) {
+	var P = lights[i],
+		light = new THREE.PointLight(0xFFFFFF);
+	light.position.set.apply(light.position, P).multiplyScalar(1000);
+	light.intensity = 1.3;
+	scene.add(light);
+}
+
+// ==== //
+
+var paused;
+var rotating = 0;
+var lastLeft;
+var lastTop;
+var mouse2D = new THREE.Vector3(0, 10000, 0.5);
+var lookAt = scene.position;
+
+function render(t) {
+	renderer.render(scene, camera);
+
+	window.stats && stats.update();
+
+	requestAnimationFrame(render);
+}
+
+render();
+
+// ==== //
+
+// drag rotating
+renderer.domElement.addEventListener('mousedown', function(e) {
+	e.preventDefault();
+
+	rotating = e.button + 1;
+	lastLeft = e.clientX;
+	lastTop = e.clientY;
+});
+renderer.domElement.addEventListener('mousemove', function(e) {
+	e.preventDefault();
+
+	if ( rotating ) {
+		// horizontal
+		//if ( 1 == rotating ) {
+			var left = e.clientX;
+			var dx = left - lastLeft;
+
+			lastLeft = left;
+
+			var rotate = dx * 0.5 * DEG_TO_RAD; // rotate 0.5 deg per px
+
+			camera.rotateAroundY(rotate, lookAt);
+		//}
+		// vertical
+		//else {
+			var top = e.clientY;
+			var dy = top - lastTop;
+
+			lastTop = top;
+
+			camera.position.y += 5 * dy; // mouse 1 px down => camera 5 up
+			camera.lookAt(lookAt);
+		//}
+	}
+});
+renderer.domElement.addEventListener('mouseup', function(e) {
+	e.preventDefault();
+
+	rotating = 0;
+});
+renderer.domElement.addEventListener('contextmenu', function(e) {
+	e.preventDefault();
+});
+
+// scroll zooming
+function onmousewheel(e) {
+	var d = e.wheelDelta || -e.detail;
+	var zoom = 0 < d ? 1.1 : 0.9;
+	camera.zoom *= zoom;
+	camera.updateProjectionMatrix();
+}
+
+renderer.domElement.addEventListener('DOMMouseScroll', onmousewheel);
+renderer.domElement.addEventListener('mousewheel', onmousewheel);
+
+var rayCaster = new THREE.Raycaster();
+
+// click scaling
+renderer.domElement.addEventListener('click', function(e) {
+	mouse2D.x = e.clientX / this.offsetWidth * 2 - 1;
+	mouse2D.y = e.clientY / this.offsetHeight * -2 + 1;
+
+	rayCaster.setFromCamera(mouse2D.clone(), camera);
+
+	var intersects = rayCaster.intersectObjects(container.children)
+	var object = intersects[0];
+
+	if ( object ) {
+		var scale = object.object.scale.x * 2;
+		scale > 2 && (scale = 0.5);
+		object.object.scale.set(scale, scale, scale);
+	}
+});
+
+// hover pointer
+renderer.domElement.addEventListener('mousemove', function(e) {
+	mouse2D.x = e.clientX / this.offsetWidth * 2 - 1;
+	mouse2D.y = e.clientY / this.offsetHeight * -2 + 1;
+
+	rayCaster.setFromCamera(mouse2D.clone(), camera);
+
+	var intersects = rayCaster.intersectObjects(container.children)
+	var object = intersects[0];
+
+	if ( object ) {
+		this.classList.add('pointing');
+	}
+	else {
+		this.classList.remove('pointing');
+	}
+});
+</script>
+
+<script src="Stats.js"></script>
+<script src="dat.gui.js"></script>
+<script>
+var stats = new Stats();
+stats.getDomElement().className += ' stats';
+document.body.appendChild(stats.getDomElement());
+
+var gui = new dat.GUI(), fl
+
+fl = gui.addFolder('camera.rotation')
+fl.add(camera.rotation, 'x', -5, 5, 0.1).listen()
+fl.add(camera.rotation, 'y', -5, 5, 0.1).listen()
+fl.add(camera.rotation, 'z', -5, 5, 0.1).listen()
+fl.open()
+
+fl = gui.addFolder('camera.position')
+fl.add(camera.position, 'x', -1000, 1000, 10).listen()
+fl.add(camera.position, 'y', -1000, 1000, 10).listen()
+fl.add(camera.position, 'z', -1000, 1000, 10).listen()
+fl.open()
+
+fl = gui.addFolder('container.position')
+fl.add(container.position, 'x', -1000, 1000, 10).listen()
+fl.add(container.position, 'y', -1000, 1000, 10).listen()
+fl.add(container.position, 'z', -1000, 1000, 10).listen()
+fl.open()
+
+fl = gui.addFolder('container.rotation')
+fl.add(container.rotation, 'x', -5, 5, 0.1).listen()
+fl.add(container.rotation, 'y', -5, 5, 0.1).listen()
+fl.add(container.rotation, 'z', -5, 5, 0.1).listen()
+fl.open()
+</script>
+
+</body>
+
+</html>

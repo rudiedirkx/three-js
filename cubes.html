@@ -1,0 +1,299 @@
+<!doctype html>
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Three | Cube</title>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	font-size: 24px;
+	line-height: 24px;
+}
+#t, #c {
+	float: left;
+	border: solid 1px #000;
+	margin: 10px 0 0 10px;
+	width: 800px;
+}
+#t {
+	width: 400px;
+	height: 300px;
+}
+.property {
+	margin-bottom: 15px;
+	float: left;
+	padding-right: 10px;
+	margin: 10px;
+}
+.dimension {
+	margin: 5px 0;
+}
+value {
+	display: inline-block;
+	width: 2.5em;
+}
+
+body:after { content: ""; display: block; clear: both; height: 0; }
+</style>
+</head>
+
+<body>
+
+<div id="t"></div>
+
+<div id=c>
+	<div class="property">
+		<h2>Camera : rotation</h2>
+		<div class="dimension" data-scale="100" data-object="camera" data-property="rotation" data-dimension="x">
+			<label>x</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+		<div class="dimension" data-scale="100" data-object="camera" data-property="rotation" data-dimension="y">
+			<label>y</label>
+			<input type="range" value="42" min="-500" max="500" />
+			<value>0.42</value>
+		</div>
+		<div class="dimension" data-scale="100" data-object="camera" data-property="rotation" data-dimension="z">
+			<label>z</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+	</div>
+
+	<div class="property">
+		<h2>Camera : position</h2>
+		<div class="dimension" data-object="camera" data-property="position" data-dimension="x">
+			<label>x</label>
+			<input type="range" value="246" min="-500" max="500" />
+			<value>246</value>
+		</div>
+		<div class="dimension" data-object="camera" data-property="position" data-dimension="y">
+			<label>y</label>
+			<input type="range" value="210" min="-500" max="500" />
+			<value>210</value>
+		</div>
+		<div class="dimension" data-object="camera" data-property="position" data-dimension="z" data-offset="500">
+			<label>z</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>500</value>
+		</div>
+	</div>
+
+	<div class="property">
+		<h2>Light : position</h2>
+		<div class="dimension" data-object="pointLight" data-property="position" data-dimension="x">
+			<label>x</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+		<div class="dimension" data-object="pointLight" data-property="position" data-dimension="y" data-offset="500">
+			<label>y</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>500</value>
+		</div>
+		<div class="dimension" data-object="pointLight" data-property="position" data-dimension="z">
+			<label>z</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+	</div>
+
+	<div class="property">
+		<h2>Object 1 : position</h2>
+		<div class="dimension" data-object="cube1" data-property="position" data-dimension="x">
+			<label>x</label>
+			<input type="range" value="-50" min="-500" max="500" />
+			<value>-50</value>
+		</div>
+		<div class="dimension" data-object="cube1" data-property="position" data-dimension="y">
+			<label>y</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+		<div class="dimension" data-object="cube1" data-property="position" data-dimension="z">
+			<label>z</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+	</div>
+
+	<div class="property">
+		<h2>Object 2 : position</h2>
+		<div class="dimension" data-object="cube2" data-property="position" data-dimension="x">
+			<label>x</label>
+			<input type="range" value="50" min="-500" max="500" />
+			<value>50</value>
+		</div>
+		<div class="dimension" data-object="cube2" data-property="position" data-dimension="y">
+			<label>y</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+		<div class="dimension" data-object="cube2" data-property="position" data-dimension="z">
+			<label>z</label>
+			<input type="range" value="0" min="-500" max="500" />
+			<value>0</value>
+		</div>
+	</div>
+</div>
+
+<script src="three-82.js"></script>
+<script>
+var container = document.getElementById('t');
+
+// set the scene size
+var WIDTH = 400,
+    HEIGHT = 300;
+
+// set some camera attributes
+var VIEW_ANGLE = 45,
+    ASPECT = WIDTH / HEIGHT,
+    NEAR = 0.1,
+    FAR = 10000;
+
+// create a WebGL renderer, camera and a scene
+var renderMethod = '#canvas' == location.hash ? 'CanvasRenderer' : 'WebGLRenderer';
+var renderer = new THREE[renderMethod]({antialias: true});
+var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+var scene = new THREE.Scene();
+scene.add(camera);
+
+// the camera starts at 0,0,0 so pull it back
+camera.position.x = 246; // left
+camera.position.y = 210; // height
+camera.position.z = 500; // distance
+
+camera.rotation.y = 0.42;
+
+// start the renderer
+renderer.setSize(WIDTH, HEIGHT);
+
+// attach the render-supplied DOM element
+container.appendChild(renderer.domElement);
+
+// ==== //
+
+// create material
+var material = new THREE.MeshLambertMaterial({color: 0xCC0000});
+
+// create geometry
+var geo = new THREE.CubeGeometry(50, 100, 200);
+
+// create cube
+var cube1 = new THREE.Mesh(geo, material);
+cube1.position.x = -50;
+scene.add(cube1);
+
+// ==== //
+
+// create material
+var material = new THREE.MeshLambertMaterial({color: 0x0000FF});
+
+// create geometry
+var geo = new THREE.CubeGeometry(100, 100, 100);
+
+// create cube
+var cube2 = new THREE.Mesh(geo, material);
+cube2.position.x = 50;
+scene.add(cube2);
+
+// ==== //
+
+// create a point light
+var pointLight = new THREE.PointLight( 0xFFFFFF );
+
+// set its position
+pointLight.position.x = 237;
+pointLight.position.y = 500;
+pointLight.position.z = 0;
+
+// add to the scene
+scene.add(pointLight);
+
+// ==== //
+
+function render(fn) {
+	fn && fn();
+	renderer.render(scene, camera);
+}
+
+render();
+</script>
+
+<script src="jquery.min.js"></script>
+<script src="jquery.mousewheel.js"></script>
+<script>
+function f(x) {
+	return parseFloat(x);
+}
+function propValue($dimension, newValue) {
+	var slider = $dimension.find('input');
+
+	// get value
+	var scale = $dimension.data('scale') || 1,
+		offset = $dimension.data('offset') || 0,
+		value = f(slider.val()) / scale + offset;
+
+	// set value
+	if ( null != newValue ) {
+		newValue = newValue * scale - offset;
+		slider.val(newValue);
+		return newValue;
+	}
+
+	return value;
+}
+
+$('.dimension').on('input', function() {
+	$(this).find('input').trigger('change');
+}).on('mousewheel', function(e, d) {
+	var $dimension = $(this);
+
+	var scale = $dimension.data('scale') || 1,
+		offset = $dimension.data('offset') || 0,
+		value = propValue($dimension);
+
+	var newValue = value + 10 * d / scale;
+	propValue($dimension, newValue);
+
+	// $dimension.trigger('changed');
+});
+
+$('input[type=range]').on('input', function(e) {
+	var $this = $(this), $dimension = $this.parent();
+
+	var value = propValue($dimension);
+
+	// get object
+	var object = window[$dimension.data('object')][$dimension.data('property')],
+		dimension = $dimension.data('dimension');
+
+	// show value
+	this.nextElementSibling.innerText = value;
+
+	// update object & paint
+	render(function() {
+		object[dimension] = value;
+	});
+});
+
+$('label').on('click', function(e) {
+	var $this = $(this), $dimension = $this.parent();
+
+	var value = propValue($dimension);
+
+	var newValue = prompt('New value:', value);
+	if ( null != newValue ) {
+		propValue($dimension, f(newValue));
+		// $(this).trigger('changed');
+	}
+});
+</script>
+
+</body>
+
+</html>
