@@ -1,14 +1,4 @@
 <!doctype html>
-<!--
-
-	TODO
-
-	* Dragging UP with the RIGHT mouse button, should rotate the camera around (over) the
-	  center, instead of just moving up. (Dragging UP with LEFT can still simply move up.)
-
-	  Moving UP is simple (1 property). Rotating upward over the center is more awesome.
-
--->
 <html>
 
 <head>
@@ -53,15 +43,14 @@ function createBlock() {
 	return obj;
 }
 
-// webgl renderer
-var renderMethod = '#canvas' == location.hash ? 'CanvasRenderer' : 'WebGLRenderer';
-var renderer = new THREE[renderMethod]({antialias: true});
+// renderer
+var renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
 renderer.clear();
 renderer.setSize(WIDTH, HEIGHT);
 document.body.appendChild(renderer.domElement);
 
-// scene (= viewport?)
+// scene
 var scene = new THREE.Scene();
 
 // camera
@@ -74,14 +63,16 @@ scene.add(camera);
 // point at the center
 camera.lookAt(scene.position);
 
-// ==== //
-
 scene.makeAxes(5000);
-
-// ==== //
 
 var container = new THREE.Object3D;
 scene.add(container);
+
+renderer.addDragRotation(scene, camera);
+renderer.addScrollZoom(camera);
+renderer.addHoverPointer(camera, container);
+
+renderer.keepRendering(scene, camera);
 
 // ==== //
 
@@ -138,112 +129,30 @@ for ( var i=0, L=lights.length; i<L; i++ ) {
 
 // ==== //
 
-var paused;
-var rotating = 0;
-var moving = false;
-var lastLeft;
-var lastTop;
+var rayCaster = new THREE.Raycaster();
 var mouse2D = new THREE.Vector2;
 var object;
-var lookAt = scene.position;
 
-function render(t) {
-	renderer.render(scene, camera);
-
-	window.stats && stats.update();
-
-	requestAnimationFrame(render);
-}
-
-render();
-
-// ==== //
-
-// drag rotating
-renderer.domElement.addEventListener('mousedown', function(e) {
-	e.preventDefault();
-
-	moving = false;
-
-	var button = null != e.button ? e.button : e.which - 1; // 0 = left, 1 = middle, 2 = right
-
-	rotating = button + 1;
-	lastLeft = e.clientX;
-	lastTop = e.clientY;
-});
-renderer.domElement.addEventListener('mousemove', function(e) {
-	e.preventDefault();
-
-	moving = true;
-
-	if ( rotating ) {
-		// horizontal
-		//if ( 1 == rotating ) {
-			var left = e.clientX;
-			var dx = left - lastLeft;
-
-			lastLeft = left;
-
-			var rotate = dx * 0.5 * DEG_TO_RAD; // rotate 0.5 deg per px
-
-			camera.rotateAroundY(rotate, lookAt);
-		//}
-		// vertical
-		//else {
-			var top = e.clientY;
-			var dy = top - lastTop;
-
-			lastTop = top;
-
-			camera.position.y += 5 * dy; // mouse 1 px down => camera 5 up
-			camera.lookAt(scene.position);
-		//}
-	}
-});
-renderer.domElement.addEventListener('mouseup', function(e) {
-	e.preventDefault();
-
-	rotating = 0;
-});
-
-// scroll zooming
-function onmousewheel(e) {
-	var d = e.wheelDelta || -e.detail;
-	var zoom = 0 < d ? 1.1 : 0.9;
-	camera.zoom *= zoom;
-	camera.updateProjectionMatrix();
-}
-
-renderer.domElement.addEventListener('DOMMouseScroll', onmousewheel);
-renderer.domElement.addEventListener('mousewheel', onmousewheel);
-
-var rayCaster = new THREE.Raycaster();
-
-function getIntersects(e) {
+function getIntersect(e) {
 	mouse2D.x = e.clientX / WIDTH * 2 - 1;
 	mouse2D.y = e.clientY / HEIGHT * -2 + 1;
 
 	rayCaster.setFromCamera(mouse2D.clone(), camera);
-
-	var intersects = rayCaster.intersectObjects(container.children)
-
-	return intersects;
+	return rayCaster.intersectObjects(container.children)[0];
 }
 
 // add blocks
 renderer.domElement.addEventListener('click', function(e) {
-	if ( !moving ) {
-		if ( object = getIntersects(e)[0] ) {
-			var color = colors[parseInt(Math.random()*colors.length)];
-			var block = createBlock();
+	if ( object = getIntersect(e) ) {
+		var color = colors[parseInt(Math.random()*colors.length)];
+		var block = createBlock();
 
-			block.position
-				.copy(object.face.normal)
-				.multiplyScalar(BLOCK_SIZE)
-				.add(object.object.position);
+		block.position
+			.copy(object.face.normal)
+			.multiplyScalar(BLOCK_SIZE)
+			.add(object.object.position);
 
-			container.add(block);
-		}
+		container.add(block);
 	}
 });
 
@@ -251,22 +160,10 @@ renderer.domElement.addEventListener('click', function(e) {
 renderer.domElement.addEventListener('contextmenu', function(e) {
 	e.preventDefault();
 
-	if ( !moving ) {
-		if ( object = getIntersects(e)[0] ) {
-			if ( 1 < container.children.length ) {
-				object.object.parent.remove(object.object);
-			}
+	if ( object = getIntersect(e) ) {
+		if ( 1 < container.children.length ) {
+			object.object.parent.remove(object.object);
 		}
-	}
-});
-
-// hover pointer
-renderer.domElement.addEventListener('mousemove', function(e) {
-	if ( object = getIntersects(e)[0] ) {
-		this.classList.add('pointing');
-	}
-	else {
-		this.classList.remove('pointing');
 	}
 });
 </script>

@@ -2,6 +2,10 @@
 var DEG_TO_RAD = 2 * Math.PI / 360,
 	RAD_TO_DEG = 1 / DEG_TO_RAD;
 
+/**
+ * CAMERA
+ */
+
 THREE.Camera.prototype.getABAngle = function(a, b, reference) {
 	reference || (reference = this.parent.position); // THREE.Scene
 
@@ -46,6 +50,10 @@ THREE.Camera.prototype.rotateAroundZ = function(dangle, reference) {
 	return this;
 }
 
+/**
+ * SCENE
+ */
+
 THREE.Scene.prototype.makeAxes = function(length) {
 	length || (length = 5000);
 
@@ -69,6 +77,123 @@ THREE.Scene.prototype.makeAxes = function(length) {
 		this.add(line);
 	}
 };
+
+/**
+ * RENDERER
+ */
+
+THREE.WebGLRenderer.prototype.addHoverPointer = function(camera, container) {
+	var mouse2D = new THREE.Vector2;
+	var rayCaster = new THREE.Raycaster();
+
+	this.domElement.addEventListener('mousemove', function(e) {
+		mouse2D.x = e.clientX / this.width * 2 - 1;
+		mouse2D.y = e.clientY / this.height * -2 + 1;
+
+		rayCaster.setFromCamera(mouse2D.clone(), camera);
+		var objects = rayCaster.intersectObjects(container.children);
+
+		if ( objects.length ) {
+			this.classList.add('pointing');
+		}
+		else {
+			this.classList.remove('pointing');
+		}
+	});
+
+};
+
+THREE.WebGLRenderer.prototype.addScrollZoom = function(camera) {
+	var onmousewheel = function(e) {
+		var d = e.wheelDelta || -e.detail;
+		var zoom = 0 < d ? 1.1 : 0.9;
+		camera.zoom *= zoom;
+		camera.updateProjectionMatrix();
+	};
+
+	this.domElement.addEventListener('DOMMouseScroll', onmousewheel);
+	this.domElement.addEventListener('mousewheel', onmousewheel);
+};
+
+THREE.WebGLRenderer.prototype.keepRendering = function(scene, camera) {
+	var renderer = this;
+	var render = function(t) {
+		renderer.render(scene, camera);
+
+		window.stats && stats.update();
+
+		requestAnimationFrame(render);
+	}
+
+	render();
+};
+
+THREE.WebGLRenderer.prototype.addDragRotation = function(scene, camera, buttons) {
+
+	camera.dragging = false;
+	camera.moving = false;
+	var lastLeft;
+	var lastTop;
+
+	buttons || (buttons = [THREE.MOUSE.MIDDLE]);
+
+	this.domElement.addEventListener('mousedown', function(e) {
+		if ( buttons.indexOf(e.button) != -1 ) {
+			e.preventDefault();
+
+			lastLeft = e.clientX;
+			lastTop = e.clientY;
+			camera.dragging = true;
+		}
+		else {
+			camera.moving = false;
+			camera.dragging = false;
+		}
+	});
+
+	this.domElement.addEventListener('mousemove', function(e) {
+		if ( !camera.dragging ) return;
+
+		camera.moving = true;
+
+		// horizontal
+		var left = e.clientX;
+		var dx = left - lastLeft;
+		lastLeft = left;
+		camera.rotateAroundY(dx * .25 * DEG_TO_RAD);
+
+		// vertical
+		// @todo stop at 1deg, because 0deg flips out
+		var top = e.clientY;
+		var dy = top - lastTop;
+		lastTop = top;
+		var rotation = camera.getABAngle('x', 'z');
+		camera.rotateAroundY(-rotation);
+		camera.rotateAroundZ(dy * .25 * DEG_TO_RAD); // rotate 2 deg per px
+		camera.rotateAroundY(rotation);
+
+		// camera.lookAt(scene.position);
+	});
+
+	this.domElement.addEventListener('mouseup', function(e) {
+		e.preventDefault();
+
+		camera.dragging = false;
+		camera.moving = false;
+	});
+
+	this.domElement.addEventListener('mouseout', function(e) {
+		e.preventDefault();
+
+		camera.dragging = false;
+		camera.moving = false;
+	});
+
+};
+
+/**
+ * TOOLS
+ */
 
 window.requestAnimationFrame || (window.requestAnimationFrame = (function(){
 	return
