@@ -27,16 +27,15 @@ body .dg li { -webkit-transition: none; }
 var DEG_TO_RAD = 2 * Math.PI / 360,
 	RAD_TO_DEG = 1 / DEG_TO_RAD;
 
-// webgl renderer
-var renderMethod = '#canvas' == location.hash ? 'CanvasRenderer' : 'WebGLRenderer';
-var renderer = new THREE[renderMethod]({antialias: true});
+// renderer
+var renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
 renderer.clear();
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// scene (= viewport?)
+// scene
 var scene = new THREE.Scene();
 
 // camera
@@ -48,6 +47,9 @@ scene.add(camera);
 
 // point at the center
 camera.lookAt(scene.position);
+
+renderer.addDragRotation(scene, camera);
+renderer.addScrollZoom(camera);
 
 // ==== //
 
@@ -114,8 +116,6 @@ function render(t) {
 	renderer.render(scene, camera);
 	!paused && rotate();
 
-	window.stats && stats.update();
-
 	requestAnimationFrame(render);
 }
 
@@ -129,43 +129,10 @@ renderer.domElement.addEventListener('click', function(e) {
 </script>
 
 <script src="Stats.js"></script>
-<script src="dat.gui.js"></script>
 <script>
 var stats = new Stats();
 stats.getDomElement().className += ' stats';
 document.body.appendChild(stats.getDomElement());
-
-var gui = new dat.GUI(), fl;
-
-fl = gui.addFolder('camera.rotation');
-fl.add(camera.rotation, 'x', -5, 5, 0.1);
-fl.add(camera.rotation, 'y', -5, 5, 0.1);
-fl.add(camera.rotation, 'z', -5, 5, 0.1);
-fl.open();
-
-fl = gui.addFolder('camera.position');
-fl.add(camera.position, 'x', -2500, 2500, 10);
-fl.add(camera.position, 'y', -2500, 2500, 10);
-fl.add(camera.position, 'z', -2500, 2500, 10);
-fl.open();
-
-fl = gui.addFolder('light.position');
-fl.add(light.position, 'x', -500, 500, 10);
-fl.add(light.position, 'y', 0, 1000, 10);
-fl.add(light.position, 'z', -500, 500, 10);
-fl.open();
-
-fl = gui.addFolder('cube.position');
-fl.add(cube.position, 'x', -2500, 2500, 10).listen();
-fl.add(cube.position, 'y', -2500, 2500, 10).listen();
-fl.add(cube.position, 'z', -2500, 2500, 10).listen();
-fl.open();
-
-fl = gui.addFolder('cube.rotation');
-fl.add(cube.rotation, 'x', -5, 5, 0.1).listen();
-fl.add(cube.rotation, 'y', -5, 5, 0.1).listen();
-fl.add(cube.rotation, 'z', -5, 5, 0.1).listen();
-fl.open();
 </script>
 
 </body>

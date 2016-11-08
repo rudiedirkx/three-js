@@ -143,37 +143,10 @@ renderer.domElement.addEventListener('click', function(e) {
 </script>
 
 <script src="Stats.js"></script>
-<script src="dat.gui.js"></script>
 <script>
 var stats = new Stats();
 stats.getDomElement().className += ' stats';
 document.body.appendChild(stats.getDomElement());
-
-var gui = new dat.GUI(), fl
-
-fl = gui.addFolder('camera.rotation')
-fl.add(camera.rotation, 'x', -5, 5, 0.1).listen()
-fl.add(camera.rotation, 'y', -5, 5, 0.1).listen()
-fl.add(camera.rotation, 'z', -5, 5, 0.1).listen()
-fl.open()
-
-fl = gui.addFolder('camera.position')
-fl.add(camera.position, 'x', -1000, 1000, 10).listen()
-fl.add(camera.position, 'y', -1000, 1000, 10).listen()
-fl.add(camera.position, 'z', -1000, 1000, 10).listen()
-fl.open()
-
-fl = gui.addFolder('container.position')
-fl.add(container.position, 'x', -1000, 1000, 10).listen()
-fl.add(container.position, 'y', -1000, 1000, 10).listen()
-fl.add(container.position, 'z', -1000, 1000, 10).listen()
-fl.open()
-
-fl = gui.addFolder('container.rotation')
-fl.add(container.rotation, 'x', -5, 5, 0.1).listen()
-fl.add(container.rotation, 'y', -5, 5, 0.1).listen()
-fl.add(container.rotation, 'z', -5, 5, 0.1).listen()
-fl.open()
 </script>
 
 </body>
