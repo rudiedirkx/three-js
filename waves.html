@@ -156,6 +156,8 @@ var moveCounter = 0;
 function render(t) {
 	renderer.render(scene, camera);
 
+	window.stats && stats.update();
+
 	moveCounter++;
 	if ( moveCounter >= MOVE_PER_FRAMES ) {
 		moveCounter = 0;
@@ -168,6 +170,13 @@ function render(t) {
 	requestAnimationFrame(render);
 }
 render();
+</script>
+
+<script src="Stats.js"></script>
+<script>
+var stats = new Stats();
+stats.getDomElement().className += ' stats';
+document.body.appendChild(stats.getDomElement());
 </script>
 
 </body>
