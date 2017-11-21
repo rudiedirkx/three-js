@@ -17,19 +17,19 @@ body .dg .property-name { width: 15%; text-indent: 5px; }
 body .dg .c { width: 85%; }
 body .dg li { -webkit-transition: none; }
 </style>
-</head>
+ </head>
 
 <body>
 
-<script src="three-82.js"></script>
+<script src="three-82.min.js"></script>
 <script src="Rudie.Three.js"></script>
 <script>
 var DEG_TO_RAD = 2 * Math.PI / 360,
 	RAD_TO_DEG = 1 / DEG_TO_RAD;
 
 // set the scene size
-var WIDTH = innerWidth,
-    HEIGHT = innerHeight;
+var WIDTH = innerWidth-1,
+    HEIGHT = innerHeight-1;
 
 // set some camera attributes
 var VIEW_ANGLE = 45,
@@ -196,7 +196,7 @@ renderer.domElement.addEventListener('click', function(e) {
 
 	rayCaster.setFromCamera(mouse2D.clone(), camera);
 
-	var intersects = rayCaster.intersectObjects(container.children)
+	var intersects = rayCaster.intersectObjects(scene.children)
 
 	var object = intersectedObject(intersects);
 	if ( object ) {
@@ -212,49 +212,10 @@ renderer.domElement.addEventListener('click', function(e) {
 </script>
 
 <script src="Stats.js"></script>
-<script src="dat.gui.js"></script>
 <script>
 var stats = new Stats();
 stats.getDomElement().className += ' stats';
 document.body.appendChild(stats.getDomElement());
-
-var gui = new dat.GUI(), fl;
-
-fl = gui.addFolder('camera.rotation');
-fl.add(camera.rotation, 'x', -5, 5, 0.1).listen();
-fl.add(camera.rotation, 'y', -5, 5, 0.1).listen();
-fl.add(camera.rotation, 'z', -5, 5, 0.1).listen();
-fl.open();
-
-fl = gui.addFolder('camera.position');
-fl.add(camera.position, 'x', -2500, 2500, 10).listen();
-fl.add(camera.position, 'y', -2500, 2500, 10).listen();
-fl.add(camera.position, 'z', -2500, 2500, 10).listen();
-fl.open();
-
-fl = gui.addFolder('light.position');
-fl.add(pointLight.position, 'x', -500, 500, 10);
-fl.add(pointLight.position, 'y', -500, 500, 10);
-fl.add(pointLight.position, 'z', -500, 500, 10);
-//fl.open();
-
-fl = gui.addFolder('light2.position');
-fl.add(pointLight2.position, 'x', -500, 500, 10);
-fl.add(pointLight2.position, 'y', -500, 500, 10);
-fl.add(pointLight2.position, 'z', -500, 500, 10);
-//fl.open();
-
-fl = gui.addFolder('cube1.position');
-fl.add(cube1.position, 'x', -500, 500, 10);
-fl.add(cube1.position, 'y', -500, 500, 10);
-fl.add(cube1.position, 'z', -500, 500, 10);
-//fl.open();
-
-fl = gui.addFolder('cube2.position');
-fl.add(cube2.position, 'x', -500, 500, 10).listen();
-fl.add(cube2.position, 'y', -500, 500, 10).listen();
-fl.add(cube2.position, 'z', -500, 500, 10).listen();
-fl.open();
 </script>
 
 </body>

@@ -1,8 +1,1 @@
-dat-gui/
-dat.gui.js
-dat.gui.min.js
-
-jquery.*
-
-three-53.*
-three-82.*
+three-82.js

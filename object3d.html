@@ -22,14 +22,14 @@ canvas.pointing { cursor: pointer; }
 
 <body>
 
-<script src="three-82.js"></script>
+<script src="three-82.min.js"></script>
 <script src="Rudie.Three.js"></script>
 <script>
 // renderer
 var renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
 renderer.clear();
-renderer.setSize(innerWidth, innerHeight);
+renderer.setSize(innerWidth-2, innerHeight-2);
 document.body.appendChild(renderer.domElement);
 
 // scene
