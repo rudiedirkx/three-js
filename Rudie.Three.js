@@ -135,7 +135,7 @@ THREE.WebGLRenderer.prototype.addDragRotation = function(scene, camera, buttons)
 	var lastLeft;
 	var lastTop;
 
-	buttons || (buttons = [THREE.MOUSE.MIDDLE]);
+	buttons || (buttons = [THREE.MOUSE.RIGHT]);
 
 	this.domElement.addEventListener('mousedown', function(e) {
 		if ( buttons.indexOf(e.button) != -1 ) {
@@ -187,6 +187,10 @@ THREE.WebGLRenderer.prototype.addDragRotation = function(scene, camera, buttons)
 
 		camera.dragging = false;
 		camera.moving = false;
+	});
+
+	this.domElement.addEventListener('contextmenu', function(e) {
+		e.preventDefault();
 	});
 
 };

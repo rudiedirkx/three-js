@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Three | Waves</title>
+<style>
+* { margin: 0; padding: 0; }
+html, body, canvas { display: block; }
+</style>
+</head>
+
+<body>
+<script src="three-82.min.js"></script>
+<script src="Rudie.Three.js"></script>
+<script>
+const GRID = 20;
+const SQUARE = 20;
+
+const MOVEMENT = 2;
+const MAX_MOVEMENT = 10;
+const MOVE_PER_FRAMES = 4; // 15x/s
+
+// renderer
+const renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+renderer.clear();
+function setSize() {
+	renderer.setSize(innerWidth-1, innerHeight-1);
+}
+setSize();
+window.addEventListener('resize', setSize);
+document.body.appendChild(renderer.domElement);
+
+// scene
+const scene = new THREE.Scene();
+
+// camera
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 10000);
+camera.position.x = 200;
+camera.position.y = 100;
+camera.position.z = 300;
+scene.add(camera);
+
+// point at the center
+camera.lookAt(scene.position);
+
+// create a light
+const light = new THREE.SpotLight(0xFFFF99);
+light.castShadow = true;
+light.position.y = 800;
+light.distance = 10000; // wtf is this?
+scene.add(light);
+
+// Show the light & shadows
+const camHelper = new THREE.CameraHelper(camera);
+scene.add(camHelper);
+
+scene.makeAxes(5000);
+
+renderer.addDragRotation(scene, camera);
+renderer.addScrollZoom(camera);
+
+const faceGeos = [];
+const grid = [];
+
+function makeFaceGeo(v1, v2, v3) {
+	const geometry = new THREE.Geometry();
+	geometry.vertices.push(v1);
+	geometry.vertices.push(v2);
+	geometry.vertices.push(v3);
+
+	// create a new face using vertices 0, 1, 2
+	const normal = undefined; // new THREE.Vector3(0, 0, 1); //optional
+	const color = undefined; // new THREE.Color(0xffaa00); //optional
+	const materialIndex = undefined; // 0; //optional
+	const face = new THREE.Face3(0, 1, 2, normal, color, materialIndex);
+
+	//add the face to the geometry's faces array
+	geometry.faces.push(face);
+
+	geometry.computeFaceNormals();
+	geometry.computeVertexNormals();
+
+	return geometry;
+}
+
+function addFaceGeo(geometry) {
+	const color = parseInt(Math.random() * 16777216);
+	const faceMaterial = new THREE.MeshStandardMaterial({color});
+
+	scene.add(new THREE.Mesh(geometry, faceMaterial));
+	faceGeos.push(geometry);
+}
+
+for ( let x = -GRID/2; x <= GRID/2; x++ ) {
+	grid.push([]);
+	for ( let z = -GRID/2; z <= GRID/2; z++ ) {
+		// const y = parseInt(Math.random() * 4) - 2;
+		const y = 0;
+		grid[grid.length-1].push(new THREE.Vector3(x * SQUARE, y, z * SQUARE));
+	}
+}
+
+for ( let x = 0; x < GRID; x++ ) {
+	for ( let z = 0; z < GRID; z++ ) {
+		addFaceGeo(makeFaceGeo(grid[x+1][z], grid[x][z], grid[x][z+1]));
+		addFaceGeo(makeFaceGeo(grid[x+1][z+1], grid[x+1][z], grid[x][z+1]));
+	}
+}
+
+function moveLines() {
+	for ( let x = 1; x < GRID; x++ ) {
+		for ( let z = 1; z < GRID; z++ ) {
+			const d = Math.round((Math.random() - 0.5) * MOVEMENT);
+			grid[x][z].y = Math.max(-MAX_MOVEMENT, Math.min(MAX_MOVEMENT, grid[x][z].y + d));
+		}
+	}
+
+	faceGeos.forEach(geo => geo.verticesNeedUpdate = true);
+}
+
+// ==== //
+
+var moveCounter = 0;
+function render(t) {
+	renderer.render(scene, camera);
+
+	window.stats && stats.update();
+
+	moveCounter++;
+	if ( moveCounter >= MOVE_PER_FRAMES ) {
+		moveCounter = 0;
+	}
+
+	if ( moveCounter == 0 ) {
+		moveLines();
+	}
+
+	requestAnimationFrame(render);
+}
+// moveLines(), moveLines(), moveLines();
+render();
+</script>
+</body>
+
+</html>

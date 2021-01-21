@@ -33,10 +33,14 @@ var LINE_SIZE = 2;
 var GRID_LOCATION = 1;
 
 // renderer
-var renderer = new THREE.WebGLRenderer({antialias: true});
+const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
 renderer.clear();
-renderer.setSize(innerWidth-1, innerHeight-1);
+function setSize() {
+	renderer.setSize(innerWidth-1, innerHeight-1);
+}
+setSize();
+window.addEventListener('resize', setSize);
 document.body.appendChild(renderer.domElement);
 
 // scene
